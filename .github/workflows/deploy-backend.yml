@@ -24,9 +24,9 @@ jobs:
         run: |
           curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
 
-      # - name: Trigger deployment on render
-      #   env:
-      #     RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-      #     CI: true
-      #   run: |
-      #     render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm
+      - name: Trigger deployment on render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          CI: true
+        run: |
+          render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm
