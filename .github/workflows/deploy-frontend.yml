@@ -39,20 +39,20 @@ jobs:
           cat android.json
           echo "ANDROID_URL=$(jq -r '.[0].artifacts.buildUrl' android.json)" >> $GITHUB_ENV
 
-      - name: Build iOS (IPA)
-        working-directory: ./frontend
-        run: |
-          eas build --platform ios --profile preview --non-interactive --json > ios.json
-          cat ios.json
-          echo "IOS_URL=$(jq -r '.[0].artifacts.buildUrl' ios.json)" >> $GITHUB_ENV
+      # - name: Build iOS (IPA)
+      #   working-directory: ./frontend
+      #   run: |
+      #     eas build --platform ios --profile preview --non-interactive --json > ios.json
+      #     cat ios.json
+      #     echo "IOS_URL=$(jq -r '.[0].artifacts.buildUrl' ios.json)" >> $GITHUB_ENV
 
       - name: Download Android APK
         run: |
           curl -L $ANDROID_URL -o app-android.apk
 
-      - name: Download iOS IPA
-        run: |
-          curl -L $IOS_URL -o app-ios.ipa
+      # - name: Download iOS IPA
+      #   run: |
+      #     curl -L $IOS_URL -o app-ios.ipa
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
