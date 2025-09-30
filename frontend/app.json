@@ -27,6 +27,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6ca71c3c-5097-4a32-8683-9602b927bc77"
+      }
+    },
+    "owner": "kurupa"
   }
 }
