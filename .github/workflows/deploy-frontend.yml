@@ -1,0 +1,65 @@
+name: Deploy Apps
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Authenticate with Expo
+        run: eas login --token ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android (APK)
+        run: |
+          eas build --platform android --profile preview --non-interactive --json > android.json
+          cat android.json
+          echo "ANDROID_URL=$(jq -r '.[0].artifacts.buildUrl' android.json)" >> $GITHUB_ENV
+
+      - name: Build iOS (IPA)
+        run: |
+          eas build --platform ios --profile preview --non-interactive --json > ios.json
+          cat ios.json
+          echo "IOS_URL=$(jq -r '.[0].artifacts.buildUrl' ios.json)" >> $GITHUB_ENV
+
+      - name: Download Android APK
+        run: |
+          curl -L $ANDROID_URL -o app-android.apk
+
+      - name: Download iOS IPA
+        run: |
+          curl -L $IOS_URL -o app-ios.ipa
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "Expo App Build #${{ github.run_number }}"
+          body: "Automated build of the Expo app.\n- Android APK\n- iOS IPA"
+          files: |
+            app-android.apk
+            app-ios.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
