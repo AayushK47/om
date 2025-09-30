@@ -1,0 +1,28 @@
+name: Deploy backend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+ 
+      - name: Build image and push to ghcr
+        run: |
+          docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          docker build -f .docker/Dockerfile.backend -t ghcr.io/aayushk47/om-backend:latest .
+          docker push ghcr.io/aayushk47/om-backend:latest
+      - name: Install Render CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
+
+      # - name: Trigger deployment on render
+      #   env:
+      #     RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      #     CI: true
+      #   run: |
+      #     render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm
