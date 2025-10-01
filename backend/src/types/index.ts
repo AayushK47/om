@@ -37,3 +37,8 @@ export interface MenuItemResponse {
 export interface UpdateOrderStatusRequest {
   status: 'pending' | 'completed';
 }
+
+export interface UpdatePaymentRequest {
+  paid: boolean;
+  paymentMode?: 'cash' | 'upi';
+}

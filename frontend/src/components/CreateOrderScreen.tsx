@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Switch,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing, borderRadius } from '../styles/spacing';
@@ -227,19 +226,30 @@ const CreateOrderScreen: React.FC<CreateOrderScreenProps> = ({ onOrderCreated })
           />
         </View>
         
-        {/* Payment Mode Dropdown - Only show when paid is true */}
+        {/* Payment Mode Radio Buttons - Only show when paid is true */}
         {paid && (
           <View style={styles.paymentModeSection}>
             <Text style={styles.sectionTitle}>Payment Mode</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={paymentMode}
-                onValueChange={(itemValue) => setPaymentMode(itemValue)}
-                style={styles.picker}
+            <View style={styles.radioContainer}>
+              <TouchableOpacity
+                style={styles.radioOption}
+                onPress={() => setPaymentMode('cash')}
               >
-                <Picker.Item label="Cash" value="cash" />
-                <Picker.Item label="UPI" value="upi" />
-              </Picker>
+                <View style={styles.radioButton}>
+                  {paymentMode === 'cash' && <View style={styles.radioButtonSelected} />}
+                </View>
+                <Text style={styles.radioLabel}>Cash</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.radioOption}
+                onPress={() => setPaymentMode('upi')}
+              >
+                <View style={styles.radioButton}>
+                  {paymentMode === 'upi' && <View style={styles.radioButtonSelected} />}
+                </View>
+                <Text style={styles.radioLabel}>UPI</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -445,15 +455,35 @@ const styles = StyleSheet.create({
   paymentModeSection: {
     marginTop: spacing.md,
   },
-  pickerContainer: {
-    backgroundColor: colors.input.background,
-    borderColor: colors.input.border,
-    borderWidth: 1,
-    borderRadius: borderRadius.md,
+  radioContainer: {
+    flexDirection: 'row',
+    gap: spacing.lg,
     marginBottom: spacing.md,
   },
-  picker: {
-    color: colors.input.text,
+  radioOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.input.border,
+    backgroundColor: colors.input.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioButtonSelected: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+  },
+  radioLabel: {
+    ...typography.body,
+    color: colors.text,
   },
   submitButton: {
     backgroundColor: colors.button.primary,

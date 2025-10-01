@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Modal,
 } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
@@ -24,6 +25,10 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [tempPaymentMode, setTempPaymentMode] = useState<'cash' | 'upi'>('cash');
+  const [updatingPayment, setUpdatingPayment] = useState(false);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -55,25 +60,84 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
     loadOrders();
   };
 
-  const toggleOrderStatus = async (orderId: number, currentStatus: string) => {
+  const markOrderAsCompleted = async (orderId: number) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) {
+      Alert.alert('Error', 'Order not found');
+      return;
+    }
+
+    // Check if payment mode is required but not selected
+    if (!order.paymentMode) {
+      // Show payment modal instead of alert
+      openPaymentModal(orderId);
+      return;
+    }
+
     try {
       setUpdatingStatus(orderId);
-      const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
-      await ordersApi.updateStatus(orderId, newStatus);
+      await ordersApi.updateStatus(orderId, 'completed');
       
       // Update local state
       setOrders(orders.map(order =>
         order.id === orderId
-          ? { ...order, status: newStatus }
+          ? { ...order, status: 'completed' }
           : order
       ));
       
-      Alert.alert('Success', `Order marked as ${newStatus}`);
+      Alert.alert('Success', 'Order marked as completed');
     } catch (error) {
       Alert.alert('Error', 'Failed to update order status');
       console.error('Error updating order status:', error);
     } finally {
       setUpdatingStatus(null);
+    }
+  };
+
+  const openPaymentModal = (orderId: number) => {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      setSelectedOrderId(orderId);
+      setTempPaymentMode(order.paymentMode || 'cash');
+      setPaymentModalVisible(true);
+    }
+  };
+
+  const closePaymentModal = () => {
+    setPaymentModalVisible(false);
+    setSelectedOrderId(null);
+    setTempPaymentMode('cash');
+  };
+
+  const updatePaymentInfo = async () => {
+    if (!selectedOrderId) return;
+
+    try {
+      setUpdatingPayment(true);
+      
+      // Update payment information and mark as completed in one go
+      await ordersApi.updatePayment(selectedOrderId, true, tempPaymentMode);
+      await ordersApi.updateStatus(selectedOrderId, 'completed');
+      
+      // Update local state
+      setOrders(orders.map(order =>
+        order.id === selectedOrderId
+          ? { 
+              ...order, 
+              paid: true,
+              paymentMode: tempPaymentMode,
+              status: 'completed'
+            }
+          : order
+      ));
+      
+      Alert.alert('Success', 'Order completed successfully');
+      closePaymentModal();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to complete order');
+      console.error('Error completing order:', error);
+    } finally {
+      setUpdatingPayment(false);
     }
   };
 
@@ -182,23 +246,37 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
               <Text style={styles.totalAmount}>₹{order.totalCost.toFixed(2)}</Text>
             </View>
 
-            {/* Status Toggle Button */}
-            <TouchableOpacity
-              style={[
-                styles.statusButton,
-                { backgroundColor: getStatusColor(order.status) }
-              ]}
-              onPress={() => toggleOrderStatus(order.id, order.status)}
-              disabled={updatingStatus === order.id}
-            >
-              {updatingStatus === order.id ? (
-                <ActivityIndicator color={colors.text} size="small" />
-              ) : (
-                <Text style={styles.statusButtonText}>
-                  Mark as {order.status === 'pending' ? 'Completed' : 'Pending'}
+            {/* Status Button */}
+            {order.status === 'pending' ? (
+              <TouchableOpacity
+                style={[
+                  styles.statusButton,
+                  { backgroundColor: getStatusColor(order.status) }
+                ]}
+                onPress={() => markOrderAsCompleted(order.id)}
+                disabled={updatingStatus === order.id || updatingPayment}
+              >
+                {updatingStatus === order.id || updatingPayment ? (
+                  <ActivityIndicator color={colors.text} size="small" />
+                ) : (
+                  <Text style={styles.statusButtonText}>
+                    Mark as Completed
+                  </Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={[
+                  styles.statusButton,
+                  styles.completedButton,
+                  { backgroundColor: colors.textDisabled }
+                ]}
+              >
+                <Text style={[styles.statusButtonText, styles.completedButtonText]}>
+                  Order Completed
                 </Text>
-              )}
-            </TouchableOpacity>
+              </View>
+            )}
           </View>
         ))}
       </ScrollView>
@@ -210,6 +288,68 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
+
+      {/* Payment Mode Modal */}
+      <Modal
+        visible={paymentModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closePaymentModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Payment Mode</Text>
+            
+            <View style={styles.modalSection}>
+              <View style={styles.paymentModeSection}>
+                <Text style={styles.sectionTitle}>Payment Mode</Text>
+                <View style={styles.radioContainer}>
+                  <TouchableOpacity
+                    style={styles.radioOption}
+                    onPress={() => setTempPaymentMode('cash')}
+                  >
+                    <View style={styles.radioButton}>
+                      {tempPaymentMode === 'cash' && <View style={styles.radioButtonSelected} />}
+                    </View>
+                    <Text style={styles.radioLabel}>Cash</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.radioOption}
+                    onPress={() => setTempPaymentMode('upi')}
+                  >
+                    <View style={styles.radioButton}>
+                      {tempPaymentMode === 'upi' && <View style={styles.radioButtonSelected} />}
+                    </View>
+                    <Text style={styles.radioLabel}>UPI</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={closePaymentModal}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={updatePaymentInfo}
+                disabled={updatingPayment}
+              >
+                {updatingPayment ? (
+                  <ActivityIndicator color={colors.text} size="small" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -362,6 +502,96 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusButtonText: {
+    ...typography.button,
+    color: colors.text,
+  },
+  completedButton: {
+    opacity: 0.7,
+  },
+  completedButtonText: {
+    color: colors.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.card.background,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalSection: {
+    marginBottom: spacing.lg,
+  },
+  paymentModeSection: {
+    marginTop: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.label,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  radioContainer: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+  },
+  radioOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioButtonSelected: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+  },
+  radioLabel: {
+    ...typography.body,
+    color: colors.text,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: colors.textDisabled,
+  },
+  saveButton: {
+    backgroundColor: colors.primary,
+  },
+  cancelButtonText: {
+    ...typography.button,
+    color: colors.textSecondary,
+  },
+  saveButtonText: {
     ...typography.button,
     color: colors.text,
   },

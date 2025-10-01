@@ -31,6 +31,10 @@ export const ordersApi = {
   updateStatus: async (orderId: number, status: 'pending' | 'completed'): Promise<void> => {
     await api.put(`/orders/${orderId}/status`, { status });
   },
+  
+  updatePayment: async (orderId: number, paid: boolean, paymentMode?: 'cash' | 'upi'): Promise<void> => {
+    await api.put(`/orders/${orderId}/payment`, { paid, paymentMode });
+  },
 };
 
 export default api;

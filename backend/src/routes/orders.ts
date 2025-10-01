@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Order, OrderItem, Menu, OrderStatus } from '../models';
-import { CreateOrderRequest, UpdateOrderStatusRequest } from '../types';
+import { CreateOrderRequest, UpdateOrderStatusRequest, UpdatePaymentRequest } from '../types';
 
 const router = Router();
 
@@ -182,6 +182,46 @@ router.put('/:id/status', async (req, res) => {
   } catch (error) {
     console.error('Error updating order status:', error);
     res.status(500).json({ error: 'Failed to update order status' });
+  }
+});
+
+// PUT /api/orders/:id/payment - Update order payment information
+router.put('/:id/payment', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paid, paymentMode }: UpdatePaymentRequest = req.body;
+
+    if (typeof paid !== 'boolean') {
+      return res.status(400).json({ 
+        error: 'Valid paid status (true/false) is required' 
+      });
+    }
+
+    if (paymentMode && !['cash', 'upi'].includes(paymentMode)) {
+      return res.status(400).json({ 
+        error: 'Valid payment mode (cash/upi) is required' 
+      });
+    }
+
+    const order = await Order.findByPk(id);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    await order.update({ 
+      paid,
+      paymentMode: paid ? paymentMode : undefined
+    });
+
+    res.json({ 
+      id: order.id, 
+      paid: order.paid,
+      paymentMode: order.paymentMode,
+      message: 'Order payment information updated successfully' 
+    });
+  } catch (error) {
+    console.error('Error updating order payment:', error);
+    res.status(500).json({ error: 'Failed to update order payment information' });
   }
 });
 
