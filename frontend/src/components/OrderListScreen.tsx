@@ -29,6 +29,7 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [tempPaymentMode, setTempPaymentMode] = useState<'cash' | 'upi'>('cash');
   const [updatingPayment, setUpdatingPayment] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pending' | 'completed'>('pending');
 
   const loadOrders = useCallback(async () => {
     try {
@@ -154,6 +155,18 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  const getFilteredOrders = () => {
+    return orders.filter(order => order.status === activeTab);
+  };
+
+  const getPendingOrdersCount = () => {
+    return orders.filter(order => order.status === 'pending').length;
+  };
+
+  const getCompletedOrdersCount = () => {
+    return orders.filter(order => order.status === 'completed').length;
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -190,8 +203,33 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
     );
   }
 
+  const filteredOrders = getFilteredOrders();
+
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Orders</Text>
+      
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'pending' && styles.activeTab]}
+          onPress={() => setActiveTab('pending')}
+        >
+          <Text style={[styles.tabText, activeTab === 'pending' && styles.activeTabText]}>
+            Pending ({getPendingOrdersCount()})
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
+          onPress={() => setActiveTab('completed')}
+        >
+          <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
+            Completed ({getCompletedOrdersCount()})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
@@ -203,9 +241,19 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
           />
         }
       >
-        <Text style={styles.title}>Orders</Text>
-        
-        {orders.map((order) => (
+        {filteredOrders.length === 0 ? (
+          <View style={styles.emptyTabContainer}>
+            <Text style={styles.emptyTabTitle}>
+              No {activeTab} orders
+            </Text>
+            <Text style={styles.emptyTabSubtitle}>
+              {activeTab === 'pending' 
+                ? 'All orders are completed!' 
+                : 'Complete some orders to see them here.'}
+            </Text>
+          </View>
+        ) : (
+          filteredOrders.map((order) => (
           <View key={order.id} style={styles.orderCard}>
             {/* Order Header */}
             <View style={styles.orderHeader}>
@@ -278,7 +326,8 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
               </View>
             )}
           </View>
-        ))}
+          ))
+        )}
       </ScrollView>
       
       {/* Floating Action Button */}
@@ -395,7 +444,53 @@ const styles = StyleSheet.create({
   title: {
     ...typography.h2,
     color: colors.text,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+    paddingTop: spacing.md,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: colors.card.background,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.card.border,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    borderRadius: borderRadius.sm,
+  },
+  activeTab: {
+    backgroundColor: colors.primary,
+    margin: spacing.xs,
+  },
+  tabText: {
+    ...typography.label,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  activeTabText: {
+    color: colors.text,
+  },
+  emptyTabContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  emptyTabTitle: {
+    ...typography.h4,
+    color: colors.text,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  emptyTabSubtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   orderCard: {
