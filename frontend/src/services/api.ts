@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { MenuItem, Order, CreateOrderRequest } from '../types';
 
-const API_BASE_URL = 'https://7f5f5809a355.ngrok-free.app/api';
+const API_BASE_URL = 'https://om-backend-latest.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
