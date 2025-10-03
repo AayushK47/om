@@ -43,12 +43,12 @@ jobs:
         run: echo "EXPO_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
 
       - name: Set Production API URL
-        run: echo "EXPO_PUBLIC_API_URL=https://om-backend-latest.onrender.com/api" >> $GITHUB_ENV
+        run: echo "EXPO_PUBLIC_API_URL=https://om-backend-latest.onrender.com" >> $GITHUB_ENV
 
       - name: Build Android (APK)
         working-directory: ./frontend
         env:
-          EXPO_PUBLIC_API_URL: https://om-backend-latest.onrender.com/api
+          EXPO_PUBLIC_API_URL: https://om-backend-latest.onrender.com
         run: |
           eas build --platform android --profile production --non-interactive --json > android.json
           cat android.json
