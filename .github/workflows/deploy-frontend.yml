@@ -2,6 +2,16 @@ name: Deploy Apps
 
 on:
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for this release (e.g., v1.0.0, v1.2.3-beta)'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes for this deployment'
+        required: false
+        default: 'Automated production build with latest changes.'
+        type: string
 
 permissions:
   contents: write
@@ -60,10 +70,21 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.run_number }}
-          name: "Production Build #${{ github.run_number }}"
+          tag_name: ${{ inputs.tag_name }}
+          name: "Release ${{ inputs.tag_name }}"
           body: |
-            Automated production build of the Expo app.
+            ## Release Notes
+            ${{ inputs.release_notes }}
+            
+            ## Build Information
+            - **Version**: ${{ inputs.tag_name }}
+            - **Build Number**: ${{ github.run_number }}
+            - **Commit**: ${{ github.sha }}
+            - **Triggered by**: ${{ github.actor }}
+            - **Date**: ${{ github.event.head_commit.timestamp }}
+            
+            ## Downloads
+            - Android APK available for download below
           files: |
             app-android.apk
             # app-ios.ipa

@@ -19,7 +19,7 @@
     "typescript": "~5.9.2"
   },
   "name": "frontend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "start": "expo start",
