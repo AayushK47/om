@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { colors } from './src/styles/colors';
+import { typography } from './src/styles/typography';
+import { spacing } from './src/styles/spacing';
 import { healthApi } from './src/services/api';
 import CreateOrderScreen from './src/components/CreateOrderScreen';
 import OrderListScreen from './src/components/OrderListScreen';
+import QRCodeModal from './src/components/QRCodeModal';
 
 export type RootStackParamList = {
   OrderList: undefined;
@@ -21,6 +24,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
 
   useEffect(() => {
     checkHealthAndStart();
@@ -113,6 +117,14 @@ export default function App() {
             options={{
               title: 'Food Orders',
               headerLeft: () => null,
+              headerRight: () => (
+                <TouchableOpacity
+                  style={styles.qrButton}
+                  onPress={() => setQrModalVisible(true)}
+                >
+                  <Text style={styles.qrIcon}>📱</Text>
+                </TouchableOpacity>
+              ),
             }}
           />
           <Stack.Screen
@@ -123,6 +135,12 @@ export default function App() {
             }}
           />
         </Stack.Navigator>
+        
+        {/* QR Code Modal */}
+        <QRCodeModal
+          visible={qrModalVisible}
+          onClose={() => setQrModalVisible(false)}
+        />
       </NavigationContainer>
     </SafeAreaProvider>
   );
@@ -183,5 +201,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textDecorationLine: 'underline',
     fontWeight: '600',
+  },
+  qrButton: {
+    padding: spacing.sm,
+    marginRight: spacing.sm,
+  },
+  qrIcon: {
+    fontSize: 20,
   },
 });

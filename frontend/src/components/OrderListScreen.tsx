@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Modal,
+  Linking,
+  Clipboard,
 } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
@@ -167,6 +169,44 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
     return orders.filter(order => order.status === 'completed').length;
   };
 
+  const handlePhonePress = async (phoneNumber: string) => {
+    try {
+      const phoneUrl = `tel:${phoneNumber}`;
+      
+      // On iOS Simulator, canOpenURL often returns false for tel: URLs
+      // but we can still try to open it directly
+      const canOpen = await Linking.canOpenURL(phoneUrl);
+      
+      if (canOpen) {
+        await Linking.openURL(phoneUrl);
+      } else {
+        // Try to open anyway - this works on real devices even if canOpenURL returns false
+        try {
+          await Linking.openURL(phoneUrl);
+        } catch (openError) {
+          // If it still fails, show a helpful message with copy option
+          Alert.alert(
+            'Cannot Make Call', 
+            'Phone app is not available. This might be because you\'re using a simulator. On a real device, this would open the phone app.',
+            [
+              { 
+                text: 'Copy Number', 
+                onPress: () => {
+                  Clipboard.setString(phoneNumber);
+                  Alert.alert('Copied', 'Phone number copied to clipboard');
+                }
+              },
+              { text: 'OK', style: 'cancel' }
+            ]
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error opening phone app:', error);
+      Alert.alert('Error', 'Failed to open phone app');
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -259,6 +299,11 @@ const OrderListScreen: React.FC<OrderListScreenProps> = ({ navigation }) => {
             <View style={styles.orderHeader}>
               <View style={styles.orderInfo}>
                 <Text style={styles.customerName}>{order.customerName}</Text>
+                {order.phoneNumber && (
+                  <TouchableOpacity onPress={() => handlePhonePress(order.phoneNumber!)}>
+                    <Text style={styles.phoneNumber}>{order.phoneNumber}</Text>
+                  </TouchableOpacity>
+                )}
                 <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
               </View>
               <View style={styles.orderMeta}>
@@ -519,6 +564,12 @@ const styles = StyleSheet.create({
     ...typography.h4,
     color: colors.text,
     marginBottom: spacing.xs,
+  },
+  phoneNumber: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+    textDecorationLine: 'underline',
   },
   orderDate: {
     ...typography.bodySmall,

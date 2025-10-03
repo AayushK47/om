@@ -22,6 +22,7 @@ interface CreateOrderScreenProps {
 
 const CreateOrderScreen: React.FC<CreateOrderScreenProps> = ({ onOrderCreated }) => {
   const [customerName, setCustomerName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [paid, setPaid] = useState(false);
@@ -97,6 +98,7 @@ const CreateOrderScreen: React.FC<CreateOrderScreenProps> = ({ onOrderCreated })
       setLoading(true);
       const orderData = {
         customerName: customerName.trim(),
+        phoneNumber: phoneNumber.trim() || undefined,
         items: selectedItems.map(item => ({
           menuItemId: item.menuItem.id,
           quantity: item.quantity,
@@ -109,6 +111,7 @@ const CreateOrderScreen: React.FC<CreateOrderScreenProps> = ({ onOrderCreated })
       
       // Reset form
       setCustomerName('');
+      setPhoneNumber('');
       setSelectedItems([]);
       setPaid(false);
       setPaymentMode('cash');
@@ -145,6 +148,19 @@ const CreateOrderScreen: React.FC<CreateOrderScreenProps> = ({ onOrderCreated })
           onChangeText={setCustomerName}
           placeholder="Enter customer name"
           placeholderTextColor={colors.input.placeholder}
+        />
+      </View>
+
+      {/* Phone Number Input */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Phone Number (Optional)</Text>
+        <TextInput
+          style={styles.input}
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          placeholder="Enter phone number"
+          placeholderTextColor={colors.input.placeholder}
+          keyboardType="phone-pad"
         />
       </View>
 

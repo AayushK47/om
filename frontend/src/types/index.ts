@@ -14,6 +14,7 @@ export interface OrderItem {
 export interface Order {
   id: number;
   customerName: string;
+  phoneNumber?: string;
   status: 'pending' | 'completed';
   paid: boolean;
   paymentMode?: 'cash' | 'upi';
@@ -25,6 +26,7 @@ export interface Order {
 
 export interface CreateOrderRequest {
   customerName: string;
+  phoneNumber?: string;
   items: Array<{
     menuItemId: number;
     quantity: number;

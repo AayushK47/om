@@ -23,11 +23,7 @@ const initializeDatabase = async () => {
         { name: 'Veg Corn Cheese Sandwich', price: 99 },
         { name: 'Cheeseballs', price: 99 },
         { name: 'Chocolate Sandwich', price: 99 },
-        { name: 'Veg Burger', price: 120 },
-        { name: 'French Fries', price: 80 },
-        { name: 'Cold Coffee', price: 60 },
-        { name: 'Tea', price: 30 },
-        { name: 'Samosa', price: 25 },
+        { name: 'Pav Bhaji', price: 120 },
       ]);
       console.log('Sample menu items created');
     }
