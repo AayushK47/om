@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { MenuItem, Order, CreateOrderRequest } from '../types';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = 'https://om-backend-latest.onrender.com'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
