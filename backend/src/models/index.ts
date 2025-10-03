@@ -20,10 +20,10 @@ const initializeDatabase = async () => {
     const menuCount = await Menu.count();
     if (menuCount === 0) {
       await Menu.bulkCreate([
-        { name: 'Veg Corn Cheese Sandwich', price: 99 },
-        { name: 'Cheeseballs', price: 99 },
-        { name: 'Chocolate Sandwich', price: 99 },
-        { name: 'Pav Bhaji', price: 120 },
+        { name: 'Veg Corn Cheese Sandwich', price: 149 },
+        { name: 'Cheeseballs', price: 149 },
+        { name: 'Chocolate Sandwich', price: 149 },
+        { name: 'Pav Bhaji', price: 149 },
       ]);
       console.log('Sample menu items created');
     }
