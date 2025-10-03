@@ -16,6 +16,22 @@ const initializeDatabase = async () => {
     await sequelize.sync({ force: false });
     console.log('Database synchronized successfully');
 
+    // Check if menu items exist, if not create sample data
+    const menuCount = await Menu.count();
+    if (menuCount === 0) {
+      await Menu.bulkCreate([
+        { name: 'Veg Corn Cheese Sandwich', price: 99 },
+        { name: 'Cheeseballs', price: 99 },
+        { name: 'Chocolate Sandwich', price: 99 },
+        { name: 'Veg Burger', price: 120 },
+        { name: 'French Fries', price: 80 },
+        { name: 'Cold Coffee', price: 60 },
+        { name: 'Tea', price: 30 },
+        { name: 'Samosa', price: 25 },
+      ]);
+      console.log('Sample menu items created');
+    }
+
   } catch (error) {
     console.error('Error initializing database:', error);
   }

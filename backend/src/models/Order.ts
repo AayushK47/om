@@ -9,6 +9,7 @@ export enum OrderStatus {
 interface OrderAttributes {
   id?: number;
   customerName: string;
+  phoneNumber?: string;
   status: OrderStatus;
   paid: boolean;
   paymentMode?: 'cash' | 'upi';
@@ -19,6 +20,7 @@ interface OrderAttributes {
 class Order extends Model<OrderAttributes> implements OrderAttributes {
   public id!: number;
   public customerName!: string;
+  public phoneNumber?: string;
   public status!: OrderStatus;
   public paid!: boolean;
   public paymentMode?: 'cash' | 'upi';
@@ -40,6 +42,10 @@ Order.init(
     customerName: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    phoneNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     status: {
       type: DataTypes.ENUM(OrderStatus.PENDING, OrderStatus.COMPLETED),

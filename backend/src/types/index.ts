@@ -1,5 +1,6 @@
 export interface CreateOrderRequest {
   customerName: string;
+  phoneNumber?: string;
   items: Array<{
     menuItemId: number;
     quantity: number;
@@ -11,6 +12,7 @@ export interface CreateOrderRequest {
 export interface OrderResponse {
   id: number;
   customerName: string;
+  phoneNumber?: string;
   status: 'pending' | 'completed';
   paid: boolean;
   totalCost: number;

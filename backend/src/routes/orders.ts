@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { Order, OrderItem, Menu, OrderStatus } from '../models';
-import { CreateOrderRequest, UpdateOrderStatusRequest, UpdatePaymentRequest } from '../types';
+import { CreateOrderDto } from '../dto/CreateOrderDto';
+import { UpdateOrderStatusDto } from '../dto/UpdateOrderStatusDto';
+import { UpdatePaymentDto } from '../dto/UpdatePaymentDto';
+import { validateDto } from '../middleware/validation';
 
 const router = Router();
 
@@ -31,6 +34,7 @@ router.get('/', async (req, res) => {
       return {
         id: order.id,
         customerName: order.customerName,
+        phoneNumber: order.phoneNumber,
         status: order.status,
         paid: order.paid,
         paymentMode: order.paymentMode,
@@ -58,15 +62,9 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/orders - Create a new order
-router.post('/', async (req, res) => {
+router.post('/', validateDto(CreateOrderDto), async (req, res) => {
   try {
-    const { customerName, items, paid, paymentMode }: CreateOrderRequest = req.body;
-
-    if (!customerName || !items || items.length === 0) {
-      return res.status(400).json({ 
-        error: 'Customer name and at least one item are required' 
-      });
-    }
+    const { customerName, phoneNumber, items, paid, paymentMode }: CreateOrderDto = req.body;
 
     // Validate menu items exist
     const menuItemIds = items.map(item => item.menuItemId);
@@ -86,6 +84,7 @@ router.post('/', async (req, res) => {
     try {
       const order = await Order.create({
         customerName,
+        phoneNumber,
         status: OrderStatus.PENDING,
         paid: paid || false,
         paymentMode: paid ? paymentMode : undefined,
@@ -126,6 +125,7 @@ router.post('/', async (req, res) => {
       const response = {
         id: completeOrder!.id,
         customerName: completeOrder!.customerName,
+        phoneNumber: completeOrder!.phoneNumber,
         status: completeOrder!.status,
         paid: completeOrder!.paid,
         paymentMode: completeOrder!.paymentMode,
@@ -156,16 +156,12 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/orders/:id/status - Update order status
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', validateDto(UpdateOrderStatusDto), async (req, res) => {
   try {
     const { id } = req.params;
-    const { status }: UpdateOrderStatusRequest = req.body;
+    const { status }: UpdateOrderStatusDto = req.body;
 
-    if (!status || !Object.values(OrderStatus).includes(status as OrderStatus)) {
-      return res.status(400).json({ 
-        error: 'Valid status (pending/completed) is required' 
-      });
-    }
+    // Status validation is now handled by the DTO
 
     const order = await Order.findByPk(id);
     if (!order) {
@@ -186,22 +182,12 @@ router.put('/:id/status', async (req, res) => {
 });
 
 // PUT /api/orders/:id/payment - Update order payment information
-router.put('/:id/payment', async (req, res) => {
+router.put('/:id/payment', validateDto(UpdatePaymentDto), async (req, res) => {
   try {
     const { id } = req.params;
-    const { paid, paymentMode }: UpdatePaymentRequest = req.body;
+    const { paid, paymentMode }: UpdatePaymentDto = req.body;
 
-    if (typeof paid !== 'boolean') {
-      return res.status(400).json({ 
-        error: 'Valid paid status (true/false) is required' 
-      });
-    }
-
-    if (paymentMode && !['cash', 'upi'].includes(paymentMode)) {
-      return res.status(400).json({ 
-        error: 'Valid payment mode (cash/upi) is required' 
-      });
-    }
+    // Validation is now handled by the DTO
 
     const order = await Order.findByPk(id);
     if (!order) {
